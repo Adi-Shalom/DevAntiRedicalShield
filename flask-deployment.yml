@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-app
+  namespace: antiradicalshield
+  labels:
+    app: flask-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flask-app
+  template:
+    metadata:
+      labels:
+        app: flask-app
+    spec:
+      containers:
+      - name: flask-backend
+        image: adishalom/antiredicalshield:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
+        envFrom:
+        - secretRef:
+            name: antiradicalshield-secrets
+        - configMapRef:
+            name: antiradicalshield-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-service
+  namespace: antiradicalshield
+  labels:
+    app: flask-app
+spec:
+  type: NodePort # Change to LoadBalancer for external access via cloud provider
+  ports:
+    - port: 5000
+      targetPort: 5000
+      nodePort: 30007 # Accessible at <node-ip>:30007
+  selector:
+    app: flask-app
+

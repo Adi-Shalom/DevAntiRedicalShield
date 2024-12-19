@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: antiradicalshield-config
+  namespace: antiradicalshield
+data:
+  POSTGRES_HOST: postgres-service
+  POSTGRES_PORT: "5432"
+  FLASK_ENV: production
+
