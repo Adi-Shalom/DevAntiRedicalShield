@@ -15,38 +15,51 @@ pipeline {
         stage('Test and Build') {
             steps {
                 script {
-                    sh 'pip install -r requirements.txt'
-                    sh 'pytest' // התאימי במידת הצורך
+                    sh '''
+                    # הוספת הנתיב עבור חבילות מקומיות
+                    export PATH=$PATH:$HOME/.local/bin
+                    # התקנת כל התלויות
+                    pip install --user -r requirements.txt
+                    # הרצת בדיקות
+                    pytest
+                    '''
                 }
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE .'
+                sh '''
+                docker build -t $DOCKER_IMAGE .
+                '''
             }
         }
 
         stage('Push Docker Image to Docker Hub') {
             steps {
                 withDockerRegistry([credentialsId: 'docker-hub-credentials', url: '']) {
-                    sh 'docker push $DOCKER_IMAGE'
+                    sh '''
+                    docker push $DOCKER_IMAGE
+                    '''
                 }
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                git url: 'https://github.com/Adi-Shalom/DevAntiRedicalShield.git', branch: 'main'
-                sh 'kubectl apply -f deployment.yaml'
+                script {
+                    git url: 'https://github.com/Adi-Shalom/DevAntiRedicalShield.git', branch: 'main'
+                    sh '''
+                    kubectl apply -f flask-deployment.yml
+                    '''
+                }
             }
         }
     }
 
     post {
         always {
-            echo 'Pipeline completed successfully.'
+            echo 'Pipeline execution completed.'
         }
     }
 }
-
