@@ -10,7 +10,7 @@ pipeline {
 
         stage('Syntax Check') {
             steps {
-                sh 'python -m py_compile app.py'
+                sh 'python3 -m py_compile app.py'
             }
         }
 
@@ -18,7 +18,7 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    python app.py &
+                    python3 app.py &
                     sleep 5
                     curl -I http://localhost:5000
                     '''
