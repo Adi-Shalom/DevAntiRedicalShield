@@ -65,19 +65,21 @@ pipeline {
         }
 
         stage('Deploy to Kubernetes') {
-    steps {
-        withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
-            script {
-                sh '''
-                echo "Checking Kubernetes connection..."
-                kubectl cluster-info
-                echo "Deploying manifests..."
-                if [ -d DevAntiRedicalShield ]; then
-                    kubectl apply -f DevAntiRedicalShield/ --validate=false
-                else
-                    kubectl apply -f . --validate=false
-                fi
-                '''
+            steps {
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                    script {
+                        sh '''
+                        echo "Checking Kubernetes connection..."
+                        kubectl cluster-info
+                        echo "Deploying manifests..."
+                        if [ -d DevAntiRedicalShield ]; then
+                            kubectl apply -f DevAntiRedicalShield/ --validate=false
+                        else
+                            kubectl apply -f . --validate=false
+                        fi
+                        '''
+                    }
+                }
             }
         }
     }
