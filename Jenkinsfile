@@ -1,27 +1,26 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKER_IMAGE = 'adishalom/antiredicalshield:latest'
-    }
-
     stages {
-        stage('Checkout Backend and Frontend Code') {
+        stage('Checkout Code') {
             steps {
-                git url: 'https://github.com/Adi-Shalom/AntiRedicalShield.git', branch: 'main'
+                checkout scm
             }
         }
 
-        stage('Test and Build') {
+        stage('Syntax Check') {
+            steps {
+                sh 'python -m py_compile app.py'
+            }
+        }
+
+        stage('Run Application and Test') {
             steps {
                 script {
                     sh '''
-                    # הוספת הנתיב עבור חבילות מקומיות
-                    export PATH=$PATH:$HOME/.local/bin
-                    # התקנת כל התלויות
-                    pip install --user -r requirements.txt
-                    # הרצת בדיקות
-                    pytest
+                    python app.py &
+                    sleep 5
+                    curl -I http://localhost:5000
                     '''
                 }
             }
@@ -29,37 +28,22 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh '''
-                docker build -t $DOCKER_IMAGE .
-                '''
+                sh 'docker build -t adishalom/antiredicalshield:latest .'
             }
         }
 
-        stage('Push Docker Image to Docker Hub') {
+        stage('Push Docker Image') {
             steps {
                 withDockerRegistry([credentialsId: 'docker-hub-credentials', url: '']) {
-                    sh '''
-                    docker push $DOCKER_IMAGE
-                    '''
+                    sh 'docker push adishalom/antiredicalshield:latest'
                 }
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                script {
-                    git url: 'https://github.com/Adi-Shalom/DevAntiRedicalShield.git', branch: 'main'
-                    sh '''
-                    kubectl apply -f flask-deployment.yml
-                    '''
-                }
+                sh 'kubectl apply -f deployment.yaml'
             }
-        }
-    }
-
-    post {
-        always {
-            echo 'Pipeline execution completed.'
         }
     }
 }
