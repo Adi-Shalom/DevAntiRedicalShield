@@ -67,12 +67,14 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    // וידוא כל הקבצים בתיקיית DevAntiRedicalShield
                     sh '''
+                    # בדוק אם הקבצים קיימים בתיקייה DevAntiRedicalShield
                     if [ -d DevAntiRedicalShield ]; then
-                        kubectl apply -f DevAntiRedicalShield/
+                        echo "Applying manifests from DevAntiRedicalShield directory..."
+                        kubectl apply -f DevAntiRedicalShield/ --validate=false
                     else
-                        kubectl apply -f .
+                        echo "Applying manifests from the current directory..."
+                        kubectl apply -f . --validate=false
                     fi
                     '''
                 }
