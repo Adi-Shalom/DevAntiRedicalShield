@@ -66,7 +66,16 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh 'kubectl apply -f DevAntiRedicalShield/'
+                script {
+                    // וידוא כל הקבצים בתיקיית DevAntiRedicalShield
+                    sh '''
+                    if [ -d DevAntiRedicalShield ]; then
+                        kubectl apply -f DevAntiRedicalShield/
+                    else
+                        kubectl apply -f .
+                    fi
+                    '''
+                }
             }
         }
     }
