@@ -17,35 +17,37 @@ pipeline {
 
                     if (minikubeStatus != 0) {
                         echo 'Minikube is not running. Starting Minikube...'
-                        sh 'minikube start --driver=docker'
+                        timeout(time: 5, unit: 'MINUTES') {
+                            sh 'minikube start --driver=docker'
+                        }
                     } else {
                         echo 'Minikube is already running.'
                     }
-
-                    echo 'Verifying Kubernetes cluster...'
-                    sh 'kubectl cluster-info'
                 }
             }
         }
 
-        stage('Checkout Dev Configurations') {
-            steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    userRemoteConfigs: [[url: "${GITHUB_DEV_REPO}"]]
-                ])
-            }
-        }
-
-        stage('Checkout Application Code') {
-            steps {
-                dir('AntiRedicalShield') {
-                    checkout([
-                        $class: 'GitSCM',
-                        branches: [[name: '*/main']],
-                        userRemoteConfigs: [[url: "${GITHUB_APP_REPO}"]]
-                    ])
+        stage('Checkout Code') {
+            parallel {
+                stage('Checkout Dev Configurations') {
+                    steps {
+                        checkout([
+                            $class: 'GitSCM',
+                            branches: [[name: '*/main']],
+                            userRemoteConfigs: [[url: "${GITHUB_DEV_REPO}"]]
+                        ])
+                    }
+                }
+                stage('Checkout Application Code') {
+                    steps {
+                        dir('AntiRedicalShield') {
+                            checkout([
+                                $class: 'GitSCM',
+                                branches: [[name: '*/main']],
+                                userRemoteConfigs: [[url: "${GITHUB_APP_REPO}"]]
+                            ])
+                        }
+                    }
                 }
             }
         }
@@ -129,4 +131,3 @@ pipeline {
         }
     }
 }
-
