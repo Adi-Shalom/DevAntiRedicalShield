@@ -4,11 +4,11 @@ pipeline {
     stages {
         stage('Checkout Dev Configurations') {
             steps {
-                dir('DevAntiRedicalShield') { // יצירת תיקייה עבור DevAntiRedicalShield
+                dir('DevAntiRadicalShield') { // יצירת תיקייה עבור DevAntiRadicalShield
                     checkout([
                         $class: 'GitSCM',
                         branches: [[name: '*/main']],
-                        userRemoteConfigs: [[url: 'https://github.com/Adi-Shalom/DevAntiRedicalShield.git']]
+                        userRemoteConfigs: [[url: 'https://github.com/Adi-Shalom/DevAntiRadicalShield.git']]
                     ])
                 }
             }
@@ -39,6 +39,7 @@ pipeline {
                 dir('AntiRedicalShield') { // הרצת היישום ובדיקות בתיקיית AntiRedicalShield
                     script {
                         sh '''
+                        pkill -f "python3 app.py" || true
                         python3 app.py &
                         sleep 5
                         curl -I http://localhost:5000
@@ -72,13 +73,9 @@ pipeline {
                     script {
                         sh '''
                         echo "Checking Kubernetes connection..."
-                        kubectl cluster-info
+                        kubectl --kubeconfig=DevAntiRedicalShield/kubeconfig cluster-info
                         echo "Deploying manifests to namespace antiradicalshield..."
-                        if [ -d DevAntiRedicalShield ]; then
-                            kubectl apply -f DevAntiRedicalShield/ --validate=false
-                        else
-                            kubectl apply -f . --namespace=antiradicalshield --validate=false
-                        fi
+                        kubectl --kubeconfig=DevAntiRadicalShield/kubeconfig apply -f DevAntiRedicalShield/ --validate=false
                         '''
                     }
                 }
