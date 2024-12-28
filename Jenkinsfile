@@ -9,27 +9,35 @@ pipeline {
     }
 
     stages {
-        stage('Checkout Code') {
-            parallel {
-                stage('Checkout Dev Configurations') {
-                    steps {
-                        checkout([
-                            $class: 'GitSCM',
-                            branches: [[name: '*/main']],
-                            userRemoteConfigs: [[url: "${GITHUB_DEV_REPO}"]]
-                        ])
-                    }
+        stage('Checkout Dev Configurations') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[url: "${GITHUB_DEV_REPO}"]]
+                ])
+            }
+        }
+
+        stage('Checkout Application Code') {
+            steps {
+                dir('AntiRedicalShield') {
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: '*/main']],
+                        userRemoteConfigs: [[url: "${GITHUB_APP_REPO}"]]
+                    ])
                 }
-                stage('Checkout Application Code') {
-                    steps {
-                        dir('AntiRedicalShield') {
-                            checkout([
-                                $class: 'GitSCM',
-                                branches: [[name: '*/main']],
-                                userRemoteConfigs: [[url: "${GITHUB_APP_REPO}"]]
-                            ])
-                        }
-                    }
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                dir('AntiRedicalShield') {
+                    sh '''
+                    echo "Installing Python dependencies..."
+                    pip3 install -r requirements.txt
+                    '''
                 }
             }
         }
@@ -47,8 +55,10 @@ pipeline {
                 dir('AntiRedicalShield') {
                     script {
                         sh '''
+                        echo "Starting application for testing..."
                         python3 app.py &
                         sleep 5
+                        echo "Testing application endpoint..."
                         curl -I http://localhost:5000
                         '''
                     }
