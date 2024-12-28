@@ -4,13 +4,11 @@ pipeline {
     stages {
         stage('Checkout Dev Configurations') {
             steps {
-                dir('DevAntiRedicalShield') {
-                    checkout([
-                        $class: 'GitSCM',
-                        branches: [[name: '*/main']],
-                        userRemoteConfigs: [[url: 'https://github.com/Adi-Shalom/DevAntiRadicalShield.git']]
-                    ])
-                } // כאן נסגר הבלוק של dir בצורה נכונה
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[url: 'https://github.com/Adi-Shalom/DevAntiRedicalShield.git']]
+                ])
             }
         }
 
@@ -42,7 +40,6 @@ pipeline {
                         python3 app.py &
                         sleep 5
                         curl -I http://localhost:5000
-                        pkill -f app.py
                         '''
                     }
                 }
@@ -82,26 +79,12 @@ pipeline {
                         if [ -d DevAntiRedicalShield ]; then
                             kubectl apply -f DevAntiRedicalShield/ --namespace=antiradicalshield --validate=false
                         else
-                            echo "Error: DevAntiRedicalShield directory not found"
-                            exit 1
+                            kubectl apply -f . --namespace=antiradicalshield --validate=false
                         fi
                         '''
                     }
                 }
             }
-        }
-    }
-
-    post {
-        always {
-            echo 'Cleaning up...'
-            sh 'docker image prune -f'
-        }
-        success {
-            echo 'Pipeline executed successfully!'
-        }
-        failure {
-            echo 'Pipeline failed. Check logs for errors.'
         }
     }
 }
