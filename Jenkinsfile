@@ -71,11 +71,15 @@ pipeline {
                         sh '''
                         echo "Checking Kubernetes connection..."
                         kubectl cluster-info
+
+                        echo "Ensuring namespace 'antiradicalshield' exists..."
+                        kubectl get namespace antiradicalshield || kubectl create namespace antiradicalshield
+
                         echo "Deploying manifests..."
                         if [ -d DevAntiRedicalShield ]; then
-                            kubectl apply -f DevAntiRedicalShield/ --validate=false
+                            kubectl apply -f DevAntiRedicalShield/ --namespace=antiradicalshield --validate=false
                         else
-                            kubectl apply -f . --validate=false
+                            kubectl apply -f . --namespace=antiradicalshield --validate=false
                         fi
                         '''
                     }
