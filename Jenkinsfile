@@ -4,19 +4,17 @@ pipeline {
     stages {
         stage('Checkout Dev Configurations') {
             steps {
-                dir('DevAntiRadicalShield') { // יצירת תיקייה עבור DevAntiRadicalShield
-                    checkout([
-                        $class: 'GitSCM',
-                        branches: [[name: '*/main']],
-                        userRemoteConfigs: [[url: 'https://github.com/Adi-Shalom/DevAntiRadicalShield.git']]
-                    ])
-                }
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[url: 'https://github.com/Adi-Shalom/DevAntiRedicalShield.git']]
+                ])
             }
         }
 
         stage('Checkout Application Code') {
             steps {
-                dir('AntiRedicalShield') { // יצירת תיקייה עבור AntiRedicalShield
+                dir('AntiRedicalShield') {
                     checkout([
                         $class: 'GitSCM',
                         branches: [[name: '*/main']],
@@ -68,13 +66,17 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                dir('DevAntiRadicalShield') {
+                withCredentials([file(credentialsId: 'kubeconfig-credentials', variable: 'KUBECONFIG')]) {
                     script {
                         sh '''
                         echo "Checking Kubernetes connection..."
-                        KUBECONFIG=$(pwd)/kubeconfig kubectl cluster-info
+                        kubectl cluster-info
                         echo "Deploying manifests..."
-                        KUBECONFIG=$(pwd)/kubeconfig kubectl apply -f . --validate=false
+                        if [ -d DevAntiRedicalShield ]; then
+                            kubectl apply -f DevAntiRedicalShield/ --validate=false
+                        else
+                            kubectl apply -f . --validate=false
+                        fi
                         '''
                     }
                 }
