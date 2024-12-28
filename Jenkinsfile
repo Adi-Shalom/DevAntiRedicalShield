@@ -9,48 +9,56 @@ pipeline {
     }
 
     stages {
-        stage('Checkout Dev Configurations') {
-            steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    userRemoteConfigs: [[url: "${GITHUB_DEV_REPO}"]]
-                ])
-            }
-        }
+        stage('Checkout Repositories') {
+            parallel {
+                stage('Checkout Dev Configurations') {
+                    steps {
+                        checkout([
+                            $class: 'GitSCM',
+                            branches: [[name: '*/main']],
+                            userRemoteConfigs: [[url: "${GITHUB_DEV_REPO}"]]
+                        ])
+                    }
+                }
 
-        stage('Checkout Application Code') {
-            steps {
-                dir('AntiRedicalShield') {
-                    checkout([
-                        $class: 'GitSCM',
-                        branches: [[name: '*/main']],
-                        userRemoteConfigs: [[url: "${GITHUB_APP_REPO}"]]
-                    ])
+                stage('Checkout Application Code') {
+                    steps {
+                        dir('AntiRedicalShield') {
+                            checkout([
+                                $class: 'GitSCM',
+                                branches: [[name: '*/main']],
+                                userRemoteConfigs: [[url: "${GITHUB_APP_REPO}"]]
+                            ])
+                        }
+                    }
                 }
             }
         }
 
-        stage('Install Dependencies') {
-            steps {
-                dir('AntiRedicalShield') {
-                    sh '''
-                    echo "Installing Python dependencies..."
-                    pip3 install -r requirements.txt
-                    '''
+        stage('Prepare Application') {
+            parallel {
+                stage('Install Dependencies') {
+                    steps {
+                        dir('AntiRedicalShield') {
+                            sh '''
+                            echo "Installing Python dependencies..."
+                            pip3 install -r requirements.txt
+                            '''
+                        }
+                    }
+                }
+
+                stage('Syntax Check') {
+                    steps {
+                        dir('AntiRedicalShield') {
+                            sh 'python3 -m py_compile app.py'
+                        }
+                    }
                 }
             }
         }
 
-        stage('Syntax Check') {
-            steps {
-                dir('AntiRedicalShield') {
-                    sh 'python3 -m py_compile app.py'
-                }
-            }
-        }
-
-        stage('Run Application and Test') {
+        stage('Run and Test Application') {
             steps {
                 dir('AntiRedicalShield') {
                     script {
@@ -66,19 +74,23 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
-            steps {
-                dir('AntiRedicalShield') {
-                    sh "docker build -t ${DOCKER_IMAGE} ."
+        stage('Build and Push Docker Image') {
+            parallel {
+                stage('Build Docker Image') {
+                    steps {
+                        dir('AntiRedicalShield') {
+                            sh "docker build -t ${DOCKER_IMAGE} ."
+                        }
+                    }
                 }
-            }
-        }
 
-        stage('Push Docker Image') {
-            steps {
-                withDockerRegistry([credentialsId: 'docker-hub-credentials', url: '']) {
-                    dir('AntiRedicalShield') {
-                        sh "docker push ${DOCKER_IMAGE}"
+                stage('Push Docker Image') {
+                    steps {
+                        withDockerRegistry([credentialsId: 'docker-hub-credentials', url: '']) {
+                            dir('AntiRedicalShield') {
+                                sh "docker push ${DOCKER_IMAGE}"
+                            }
+                        }
                     }
                 }
             }
