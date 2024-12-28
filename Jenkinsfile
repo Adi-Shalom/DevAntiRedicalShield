@@ -9,6 +9,25 @@ pipeline {
     }
 
     stages {
+        stage('Pre-checks') {
+            steps {
+                script {
+                    echo 'Checking if Minikube is running...'
+                    def minikubeStatus = sh(script: 'minikube status', returnStatus: true)
+
+                    if (minikubeStatus != 0) {
+                        echo 'Minikube is not running. Starting Minikube...'
+                        sh 'minikube start --driver=docker'
+                    } else {
+                        echo 'Minikube is already running.'
+                    }
+
+                    echo 'Verifying Kubernetes cluster...'
+                    sh 'kubectl cluster-info'
+                }
+            }
+        }
+
         stage('Checkout Dev Configurations') {
             steps {
                 checkout([
