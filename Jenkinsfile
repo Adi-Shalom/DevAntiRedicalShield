@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Checkout Dev Configurations') {
             steps {
-                dir('DevAntiRedicalShield') { // יצירת תיקייה עבור DevAntiRedicalShield
+                dir('DevAntiRedicalShield') {
                     checkout([
                         $class: 'GitSCM',
                         branches: [[name: '*/main']],
@@ -16,7 +16,7 @@ pipeline {
 
         stage('Checkout Application Code') {
             steps {
-                dir('AntiRedicalShield') { // יצירת תיקייה עבור AntiRedicalShield
+                dir('AntiRedicalShield') {
                     checkout([
                         $class: 'GitSCM',
                         branches: [[name: '*/main']],
@@ -71,11 +71,6 @@ pipeline {
                 withCredentials([file(credentialsId: 'kubeconfig-credentials', variable: 'KUBECONFIG')]) {
                     script {
                         sh '''
-                        echo "Fixing permissions for Minikube files..."
-                        chmod 644 /home/ubuntu/.minikube/ca.crt
-                        chmod 644 /home/ubuntu/.minikube/profiles/minikube/client.crt
-                        chmod 600 /home/ubuntu/.minikube/profiles/minikube/client.key
-
                         echo "Checking Kubernetes connection..."
                         kubectl cluster-info
                         echo "Deploying manifests..."
