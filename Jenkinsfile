@@ -4,17 +4,19 @@ pipeline {
     stages {
         stage('Checkout Dev Configurations') {
             steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    userRemoteConfigs: [[url: 'https://github.com/Adi-Shalom/DevAntiRedicalShield.git']]
-                ])
+                dir('DevAntiRedicalShield') { // יצירת תיקייה עבור DevAntiRedicalShield
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: '*/main']],
+                        userRemoteConfigs: [[url: 'https://github.com/Adi-Shalom/DevAntiRedicalShield.git']]
+                    ])
+                }
             }
         }
 
         stage('Checkout Application Code') {
             steps {
-                dir('AntiRedicalShield') {
+                dir('AntiRedicalShield') { // יצירת תיקייה עבור AntiRedicalShield
                     checkout([
                         $class: 'GitSCM',
                         branches: [[name: '*/main']],
@@ -26,7 +28,7 @@ pipeline {
 
         stage('Syntax Check') {
             steps {
-                dir('AntiRedicalShield') {
+                dir('AntiRedicalShield') { // בדיקה תחבירית בתוך תיקיית AntiRedicalShield
                     sh 'python3 -m py_compile app.py'
                 }
             }
@@ -34,7 +36,7 @@ pipeline {
 
         stage('Run Application and Test') {
             steps {
-                dir('AntiRedicalShield') {
+                dir('AntiRedicalShield') { // הרצת היישום ובדיקות בתיקיית AntiRedicalShield
                     script {
                         sh '''
                         python3 app.py &
@@ -48,7 +50,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                dir('AntiRedicalShield') {
+                dir('AntiRedicalShield') { // בניית תמונת Docker מתוך תיקיית AntiRedicalShield
                     sh 'docker build -t adishalom/antiredicalshield:latest .'
                 }
             }
@@ -57,7 +59,7 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 withDockerRegistry([credentialsId: 'docker-hub-credentials', url: '']) {
-                    dir('AntiRedicalShield') {
+                    dir('AntiRedicalShield') { // דחיפת תמונת Docker מתוך AntiRedicalShield
                         sh 'docker push adishalom/antiredicalshield:latest'
                     }
                 }
@@ -71,11 +73,11 @@ pipeline {
                         sh '''
                         echo "Checking Kubernetes connection..."
                         kubectl cluster-info
-                        echo "Deploying manifests to namespace antiradicalshield......"
+                        echo "Deploying manifests to namespace antiradicalshield..."
                         if [ -d DevAntiRedicalShield ]; then
                             kubectl apply -f DevAntiRedicalShield/ --validate=false
                         else
-                            kubectl apply -f .--namespace=antiradicalshield --validate=false
+                            kubectl apply -f . --namespace=antiradicalshield --validate=false
                         fi
                         '''
                     }
